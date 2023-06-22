@@ -57,6 +57,9 @@ instance : Add (alg k M) where
         rw [hneg.1,hneg.2,zero_add] at h
         simp at h }
 
+@[simp]
+protected theorem add_apply (f g : alg k M) : (f + g) m = f m + g m:= rfl
+
 def mk (l : List <| M × k) : alg k M := l.map (fun p => single' p.1 p.2)|>.foldl (· + ·) 0
 
 protected theorem coe_add (f g : alg k M) : ⇑(f + g) = f + g := rfl
