@@ -5,6 +5,7 @@ Authors: Matthew Robert Ballard
 -/
 
 import GB.FinsuppAlg.Basic
+import Init.Data.Format.Basic
 
 variable {k : Type} {M : Type}
 variable [DecidableEq k] [CommRing k] [LinearOrderedAddCommMonoid M]
@@ -12,8 +13,6 @@ variable [DecidableEq k] [CommRing k] [LinearOrderedAddCommMonoid M]
 open Finsupp Finset FinsuppAlg
 
 namespace FinsuppAlg
-
--- scoped instance : Monad <| WithBot := inferInstanceAs <| Monad <| Option
 
 /-- The leading monomial of `f` normalized to `lm 0 = ⊥`. -/
 def lm (f : alg k M) : WithBot M := f.support.max
@@ -157,7 +156,34 @@ theorem tail_lt_self_of_ne_zero {f : alg k M} (h : f ≠ 0) : tail f < f := by
     rw [h''''] at h''
     exact (mem_support_toFun _ _).mp h'' (tail_apply_lm_eq_zero _)
 
-instance wflmLT {wf : WellFounded <| fun m m' : M => m < m'} : WellFoundedLT (alg k M) where
-  wf := InvImage.wf (r := fun m m' : WithBot M => m < m') (fun (f : alg k M) => lm f)
-    <| WithBot.wellFounded_lt wf
+variable (k M)
 
+theorem wf_lm [I : IsWellOrder M (·<·)] : WellFounded (@LT.lt (alg k M) _) :=
+  InvImage.wf (r := fun m m' : WithBot M => m < m') (fun (f : alg k M) => lm f)
+    <| WithBot.wellFounded_lt I.wf
+
+variable {k M}
+
+variable [IsWellOrder M (· < ·)]
+
+def toOrdList (f : alg k M) : List <| k × M :=
+  have : IsWellOrder M (· < ·) := inferInstance
+  if h : f = 0 then [] else
+    have : tail f < f := tail_lt_self_of_ne_zero h
+    ⟨lc f, lm' f h⟩ :: toOrdList (tail f)
+termination_by' ⟨_, wf_lm k M⟩
+
+open Std Format
+
+instance (priority := 1000) [ToFormat k] [ToFormat M] : ToFormat <| k × M where
+  format := fun p => (format p.1) ++ "u^" ++ (format p.2)
+
+instance repr [ToFormat k] [ToFormat M] : Repr (alg k M) where
+  reprPrec := fun f _ => -- reprPrec (toOrdList f) 0
+    match toOrdList f with
+    | [] => ""
+    | as => Format.joinSep as (" + ")
+
+def foo : alg ℤ ℕ := mk [⟨1,0⟩,⟨2,1⟩,⟨3,2⟩]
+
+#eval foo
