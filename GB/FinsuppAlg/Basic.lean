@@ -97,6 +97,12 @@ instance : AddCommMonoid (alg k M) :=
 instance : Mul (alg k M) :=
   ⟨fun f g => f.sum fun a₁ b₁ => g.sum fun a₂ b₂ => single' (a₁ + a₂) (b₁ * b₂)⟩
 
+/-- This can be filled in when Finsupp.single is fixed -/
+theorem single'_mul_single' (m m' : M) (a a' : k) : single' m a * single' m' a' = single' (m+m') (a*a') := sorry
+  -- Original proof
+  -- apply sum_single_index (by simp only [zero_mul, single_zero, sum_zero])).trans
+  --   (sum_single_index (by rw [mul_zero, single_zero]))
+
 instance : SMul k (alg k M) where
   smul a v :=
     { support := v.support.filter (fun m => a • v m ≠ 0)
